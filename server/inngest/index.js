@@ -25,17 +25,15 @@ const syncUserCreation = inngest.createFunction(
   { id: "sync-user-from-clerk" },
   { event: "clerk/user.created" },
   async ({ event }) => {
-    await ensureDB();
-
+    
     const { id, first_name, last_name, image_url, email_addresses } = event.data || {};
     if (!id) throw new Error("Missing Clerk user ID");
 
-    let username =
-      email_addresses?.[0]?.email_address?.split("@")[0] || `user_${id.slice(0, 6)}`;
+    let username =email_addresses?.[0]?.email_address?.split("@")[0] || `user_${id.slice(0, 6)}`;
 
     // Ensure username is unique
-    const existingUser = await User.findOne({ username }).lean();
-    if (existingUser) {
+    const user = await User.findOne({ username }).lean();
+    if (user) {
       username = `${username}${Math.floor(Math.random() * 10000)}`;
     }
 
@@ -47,13 +45,9 @@ const syncUserCreation = inngest.createFunction(
       username,
     };
 
-    try {
-      await User.findByIdAndUpdate(id, userData, { upsert: true, new: true });
-      console.log(`✅ User synced: ${id}`);
-    } catch (err) {
-      console.error("❌ Error syncing user:", err);
-      throw err;
-    }
+    await User.create(userData);
+    console.log(`🆕 New user created: ${id}`);
+
 
     return { status: "User created/updated successfully" };
   }
@@ -66,8 +60,7 @@ const syncUserUpdate = inngest.createFunction(
   { id: "update-user-from-clerk" },
   { event: "clerk/user.updated" },
   async ({ event }) => {
-    await ensureDB();
-
+ 
     const { id, first_name, last_name, image_url, email_addresses } = event.data || {};
     if (!id) throw new Error("Missing Clerk user ID");
 
@@ -76,16 +69,9 @@ const syncUserUpdate = inngest.createFunction(
       full_name: `${first_name || ""} ${last_name || ""}`.trim(),
       profile_picture: image_url || null,
     };
+    await User.findByIdAndUpdate(id, updateUserData);
+    console.log(`✏️ User updated: ${id}`);
 
-    try {
-      await User.findByIdAndUpdate(id, updateUserData);
-      console.log(`🔄 User updated: ${id}`);
-    } catch (err) {
-      console.error("❌ Error updating user:", err);
-      throw err;
-    }
-
-    return { status: "User updated successfully" };
   }
 );
 
@@ -96,20 +82,14 @@ const syncUserDeletion = inngest.createFunction(
   { id: "delete-user-from-clerk" },
   { event: "clerk/user.deleted" },
   async ({ event }) => {
-    await ensureDB();
+    
 
     const { id } = event.data || {};
     if (!id) throw new Error("Missing Clerk user ID");
+    await User.findByIdAndDelete(id);
+    console.log(`🗑️ User deleted: ${id}`);
+    
 
-    try {
-      await User.findByIdAndDelete(id);
-      console.log(`🗑️ User deleted: ${id}`);
-    } catch (err) {
-      console.error("❌ Error deleting user:", err);
-      throw err;
-    }
-
-    return { status: "User deleted successfully" };
   }
 );
 
