@@ -5,7 +5,7 @@ const connectDB = async () => {
         // Attach event listeners before connecting
         mongoose.connection.on('connected', () => console.log('DATABASE CONNECTED'));
              // Correct string interpolation
-             await mongoose.connect(`${process.env.MONGODB_URL}/pingup`);
+             await mongoose.connect(`${process.env.MONGODB_URL}/pingup-app`);
 
     } catch (error) {
         console.error('Database connection failed:', error.message);

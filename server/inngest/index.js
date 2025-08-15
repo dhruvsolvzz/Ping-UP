@@ -1,10 +1,10 @@
 // inngestFunctions.js
 import { Inngest } from "inngest";
 import connectDB from "../configs/db.js";
-import User from "../models/user.js";
+import User from "../models/User.js";
 
 // Create a single Inngest client
-export const inngest = new Inngest({ id: "pingup" });
+export const inngest = new Inngest({ id: "pingup-app" });
 
 /**
  * Utility: ensure DB connection before running any queries
